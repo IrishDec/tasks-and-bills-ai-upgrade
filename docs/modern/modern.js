@@ -49,8 +49,14 @@ formEl.addEventListener("submit", async (e) => {
 // init
 (async () => {
   statusEl.textContent = "Connecting…";
-  const { error } = await supabase.from("profiles").select("id").limit(1);
-  statusEl.textContent = error ? "Connected ✔ (no table yet)" : "Connected ✔";
+  const { data, error } = await supabase.from("profiles").select("id").limit(1);
+  if (error) {
+    statusEl.textContent = "Supabase error: " + error.message;
+    console.error("Supabase select error:", error);
+  } else {
+    statusEl.textContent = "Connected ✔";
+  }
   await loadProfiles();
 })();
+
 
