@@ -82,6 +82,56 @@ formEl.addEventListener("submit", async (e) => {
   await loadProfiles();
 });
 
+// Change selected member → reload tasks
+taskProfileSel?.addEventListener("change", () => {
+  loadTasks(taskProfileSel.value);
+});
+
+// Add a new task for the selected member
+addTaskForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = (taskTextEl.value || "").trim();
+  if (!text) return;
+  const profileId = taskProfileSel.value;
+
+  const { error } = await supabase
+    .from("tasks")
+    .insert({ profile_id: profileId, text });
+
+  if (error) { alert(error.message); return; }
+  taskTextEl.value = "";
+  await loadTasks(profileId);
+});
+
+// Toggle task done/active
+tasksList?.addEventListener("click", async (e) => {
+  const btn = e.target.closest("button.toggle");
+  if (!btn) return;
+  const id = btn.dataset.id;
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("done, profile_id")
+    .eq("id", id)
+    .single();
+
+  if (error) { alert(error.message); return; }
+
+  const updates = {
+    done: !data.done,
+    completed_at: !data.done ? new Date().toISOString() : null
+  };
+
+  const { error: e2 } = await supabase
+    .from("tasks")
+    .update(updates)
+    .eq("id", id);
+
+  if (e2) { alert(e2.message); return; }
+  await loadTasks(data.profile_id);
+});
+
+
 // init
 (async () => {
   statusEl.textContent = "Connecting…";
