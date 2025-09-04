@@ -7,8 +7,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Create client FIRST, before any usage
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ---- DOM refs (after client) ----
+// ---- DOM refs ----
 const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
@@ -19,10 +18,14 @@ const addTaskForm    = document.getElementById("addTaskForm");
 const taskProfileSel = document.getElementById("taskProfile");
 const taskTextEl     = document.getElementById("taskText");
 
-// Optional: hide the members list UI
+// NEW: remove-member controls
+const removeProfileSel = document.getElementById("removeProfileSel");
+const removeProfileBtn = document.getElementById("removeProfileBtn");
+
+// Hide the rendered member list UI (we still use it behind the scenes)
 if (listEl) listEl.style.display = "none";
 
-// Safe probe AFTER we have statusEl
+// Safe probe
 if (statusEl) statusEl.textContent = "JS loaded – probing…";
 window.addEventListener("error", e => {
   if (statusEl) statusEl.textContent = "JS error: " + (e?.message || e);
@@ -42,18 +45,20 @@ async function loadProfiles() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  // render (hidden list; still render in case you unhide later)
-  if (error) {
-    if (listEl) listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
-  } else if (!data || !data.length) {
-    if (listEl) listEl.innerHTML = `<li class="muted">No members yet.</li>`;
-  } else {
-    if (listEl) listEl.innerHTML = data
-      .map(p => `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`)
-      .join("");
+  // (hidden) rendered list
+  if (listEl) {
+    if (error) {
+      listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
+    } else if (!data || !data.length) {
+      listEl.innerHTML = `<li class="muted">No members yet.</li>`;
+    } else {
+      listEl.innerHTML = data
+        .map(p => `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`)
+        .join("");
+    }
   }
 
-  // cache names for task display
+  // cache for name lookup
   profilesById = Object.fromEntries((data || []).map(p => [p.id, p.name]));
 
   // assignment dropdown (optional)
@@ -62,6 +67,13 @@ async function loadProfiles() {
       `<option value="">— Unassigned —</option>`,
       ...(data || []).map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
     ].join("");
+  }
+
+  // populate remove-member dropdown
+  if (removeProfileSel) {
+    removeProfileSel.innerHTML = (data || []).map(p =>
+      `<option value="${p.id}">${esc(p.name)}</option>`
+    ).join("");
   }
 
   await loadTasks();
@@ -77,7 +89,7 @@ formEl?.addEventListener("submit", async (e) => {
   await loadProfiles();
 });
 
-// ---- TASKS (shared list, badge + delete only when done) ----
+// ---- TASKS (shared list; Delete shows only when Done) ----
 async function loadTasks() {
   const { data, error } = await supabase
     .from("tasks")
@@ -119,11 +131,7 @@ addTaskForm?.addEventListener("submit", async (e) => {
   const text = (taskTextEl.value || "").trim();
   if (!text) return;
   const profileId = taskProfileSel?.value || null;
-
-  const { error } = await supabase
-    .from("tasks")
-    .insert({ profile_id: profileId, text });
-
+  const { error } = await supabase.from("tasks").insert({ profile_id: profileId, text });
   if (error) { alert(error.message); return; }
   taskTextEl.value = "";
   await loadTasks();
@@ -145,12 +153,7 @@ tasksList?.addEventListener("click", async (e) => {
   if (!txt) return;
 
   const id = txt.dataset.id;
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("done")
-    .eq("id", id)
-    .single();
-
+  const { data, error } = await supabase.from("tasks").select("done").eq("id", id).single();
   if (error) { alert(error.message); return; }
 
   if (!data.done && !confirm("Mark this task as done?")) return;
@@ -158,6 +161,23 @@ tasksList?.addEventListener("click", async (e) => {
   const updates = { done: !data.done, completed_at: !data.done ? new Date().toISOString() : null };
   const { error: e2 } = await supabase.from("tasks").update(updates).eq("id", id);
   if (e2) { alert(e2.message); return; }
+  await loadTasks();
+});
+
+// Remove member: reassign their tasks to Unassigned, then delete the profile
+removeProfileBtn?.addEventListener("click", async () => {
+  const id = removeProfileSel?.value;
+  if (!id) return;
+  const name = profilesById[id] || "this member";
+  if (!confirm(`Remove ${name}? Their tasks will become Unassigned.`)) return;
+
+  const { error: e1 } = await supabase.from("tasks").update({ profile_id: null }).eq("profile_id", id);
+  if (e1) { alert(e1.message); return; }
+
+  const { error: e2 } = await supabase.from("profiles").delete().eq("id", id);
+  if (e2) { alert(e2.message); return; }
+
+  await loadProfiles();
   await loadTasks();
 });
 
