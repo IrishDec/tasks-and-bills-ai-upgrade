@@ -1,54 +1,59 @@
+// modern.js
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// ↓ Use your real values
+// ---- Supabase config (yours) ----
 const SUPABASE_URL = "https://bbjwivuczofcauirxxcv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiandpdnVjem9mY2F1aXJ4eGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTA2MTQsImV4cCI6MjA3MjU4NjYxNH0.wQwN5I-x6mOeO0fahidAdEPrYOnz4YQsYl1v_-w-eas";
 
-// DOM
+// Create client FIRST, before any usage
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---- DOM refs (after client) ----
 const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
 
-// safe probe (NOW we have statusEl)
-if (statusEl) statusEl.textContent = "JS loaded – probing…";
-window.addEventListener("error", e => {
-  if (statusEl) statusEl.textContent = "JS error: " + (e?.message || e);
-});
-
-
-
-// Tasks DOM
 const tasksList      = document.getElementById("tasksList");
 const addTaskForm    = document.getElementById("addTaskForm");
 const taskProfileSel = document.getElementById("taskProfile");
 const taskTextEl     = document.getElementById("taskText");
 
-// utils
+// Optional: hide the members list UI
+if (listEl) listEl.style.display = "none";
+
+// Safe probe AFTER we have statusEl
+if (statusEl) statusEl.textContent = "JS loaded – probing…";
+window.addEventListener("error", e => {
+  if (statusEl) statusEl.textContent = "JS error: " + (e?.message || e);
+});
+
+// ---- utils ----
 const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[m]));
 
 let profilesById = {};
 
-// MEMBERS
+// ---- MEMBERS ----
 async function loadProfiles() {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });
 
+  // render (hidden list; still render in case you unhide later)
   if (error) {
-    listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
+    if (listEl) listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
   } else if (!data || !data.length) {
-    listEl.innerHTML = `<li class="muted">No members yet.</li>`;
+    if (listEl) listEl.innerHTML = `<li class="muted">No members yet.</li>`;
   } else {
-    listEl.innerHTML = data
+    if (listEl) listEl.innerHTML = data
       .map(p => `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`)
       .join("");
   }
 
-  // cache names for display
+  // cache names for task display
   profilesById = Object.fromEntries((data || []).map(p => [p.id, p.name]));
 
   // assignment dropdown (optional)
@@ -59,7 +64,6 @@ async function loadProfiles() {
     ].join("");
   }
 
-  // always show the shared task list
   await loadTasks();
 }
 
@@ -73,13 +77,14 @@ formEl?.addEventListener("submit", async (e) => {
   await loadProfiles();
 });
 
-// TASKS — shared list for everyone
-// TASKS — shared list, badge + delete only when done
+// ---- TASKS (shared list, badge + delete only when done) ----
 async function loadTasks() {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
     .order("created_at", { ascending: false });
+
+  if (!tasksList) return;
 
   if (error) { tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`; return; }
   if (!data || !data.length) { tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`; return; }
@@ -103,8 +108,7 @@ async function loadTasks() {
   }).join("");
 }
 
-
-// change selection (assignment only) -> just refresh list
+// assignment dropdown just refreshes list
 taskProfileSel?.addEventListener("change", () => {
   loadTasks();
 });
@@ -114,7 +118,7 @@ addTaskForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = (taskTextEl.value || "").trim();
   if (!text) return;
-  const profileId = taskProfileSel.value || null; // allow unassigned
+  const profileId = taskProfileSel?.value || null;
 
   const { error } = await supabase
     .from("tasks")
@@ -125,7 +129,7 @@ addTaskForm?.addEventListener("submit", async (e) => {
   await loadTasks();
 });
 
-// Toggle by clicking text; show confirm when moving to Done. Delete only when Done.
+// click to toggle or delete
 tasksList?.addEventListener("click", async (e) => {
   const del = e.target.closest("button.delete-task");
   if (del) {
@@ -141,7 +145,12 @@ tasksList?.addEventListener("click", async (e) => {
   if (!txt) return;
 
   const id = txt.dataset.id;
-  const { data, error } = await supabase.from("tasks").select("done").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("done")
+    .eq("id", id)
+    .single();
+
   if (error) { alert(error.message); return; }
 
   if (!data.done && !confirm("Mark this task as done?")) return;
@@ -152,11 +161,11 @@ tasksList?.addEventListener("click", async (e) => {
   await loadTasks();
 });
 
-// INIT
+// ---- INIT ----
 (async () => {
-  statusEl.textContent = "Connecting…";
+  if (statusEl) statusEl.textContent = "Connecting…";
   const { error } = await supabase.from("profiles").select("id").limit(1);
-  statusEl.textContent = error ? "Supabase error: " + error.message : "Connected ✔";
+  if (statusEl) statusEl.textContent = error ? "Supabase error: " + error.message : "Connected ✔";
   await loadProfiles();
 })();
 
