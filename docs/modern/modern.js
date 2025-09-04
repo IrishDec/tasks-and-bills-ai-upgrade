@@ -10,43 +10,26 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
-const tasksList = document.getElementById("tasksList");
-const addTaskForm = document.getElementById("addTaskForm");
+
+// Tasks DOM
+const tasksList      = document.getElementById("tasksList");
+const addTaskForm    = document.getElementById("addTaskForm");
 const taskProfileSel = document.getElementById("taskProfile");
-const taskTextEl = document.getElementById("taskText");
+const taskTextEl     = document.getElementById("taskText");
 
-
+// utils
 const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[m]));
 
-// load & render
+// MEMBERS
 async function loadProfiles() {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
-    return;
-  }
-  if (!data.length) {
-    listEl.innerHTML = `<li class="muted">No members yet.</li>`;
-    return;
-  }
-  listEl.innerHTML = data.map(p =>
-    `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`
-  ).join("");
-}
-// load tasks
-async function loadProfiles() {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  // Render the Members list
+  // render members
   if (error) {
     listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
   } else if (!data.length) {
@@ -57,7 +40,7 @@ async function loadProfiles() {
       .join("");
   }
 
-  // Populate the “Assign to member” dropdown and load tasks
+  // fill the assign dropdown + load that member’s tasks
   if (taskProfileSel) {
     taskProfileSel.innerHTML = (data || [])
       .map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
@@ -69,10 +52,9 @@ async function loadProfiles() {
       tasksList.innerHTML = `<li class="muted">Add a member first.</li>`;
     }
   }
+}
 
-
-// add member
-formEl.addEventListener("submit", async (e) => {
+formEl?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = (nameEl.value || "").trim();
   if (!name) return;
@@ -82,12 +64,45 @@ formEl.addEventListener("submit", async (e) => {
   await loadProfiles();
 });
 
-// Change selected member → reload tasks
+// TASKS
+async function loadTasks(profileId) {
+  if (!profileId) {
+    tasksList.innerHTML = `<li class="muted">Select a member.</li>`;
+    return;
+  }
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
+    return;
+  }
+  if (!data.length) {
+    tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
+    return;
+  }
+  tasksList.innerHTML = data.map(t => `
+    <li>
+      <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>${esc(t.text)}</span>
+        <button class="toggle" data-id="${t.id}">
+          ${t.done ? "Mark active" : "Mark done"}
+        </button>
+      </div>
+      <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
+    </li>
+  `).join("");
+}
+
+// change member → load tasks
 taskProfileSel?.addEventListener("change", () => {
   loadTasks(taskProfileSel.value);
 });
 
-// Add a new task for the selected member
+// add task
 addTaskForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = (taskTextEl.value || "").trim();
@@ -103,7 +118,7 @@ addTaskForm?.addEventListener("submit", async (e) => {
   await loadTasks(profileId);
 });
 
-// Toggle task done/active
+// toggle task
 tasksList?.addEventListener("click", async (e) => {
   const btn = e.target.closest("button.toggle");
   if (!btn) return;
@@ -131,18 +146,13 @@ tasksList?.addEventListener("click", async (e) => {
   await loadTasks(data.profile_id);
 });
 
-
-// init
+// INIT
 (async () => {
   statusEl.textContent = "Connecting…";
-  const { data, error } = await supabase.from("profiles").select("id").limit(1);
-  if (error) {
-    statusEl.textContent = "Supabase error: " + error.message;
-    console.error("Supabase select error:", error);
-  } else {
-    statusEl.textContent = "Connected ✔";
-  }
+  const { error } = await supabase.from("profiles").select("id").limit(1);
+  statusEl.textContent = error ? "Supabase error: " + error.message : "Connected ✔";
   await loadProfiles();
 })();
+
 
 
