@@ -39,6 +39,39 @@ async function loadProfiles() {
     `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`
   ).join("");
 }
+// load tasks
+async function loadTasks(profileId) {
+  if (!profileId) {
+    tasksList.innerHTML = `<li class="muted">Select a member.</li>`;
+    return;
+  }
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
+    return;
+  }
+  if (!data.length) {
+    tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
+    return;
+  }
+  tasksList.innerHTML = data.map(t => `
+    <li>
+      <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>${esc(t.text)}</span>
+        <button class="toggle" data-id="${t.id}">
+          ${t.done ? "Mark active" : "Mark done"}
+        </button>
+      </div>
+      <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
+    </li>
+  `).join("");
+}
+
 
 // add member
 formEl.addEventListener("submit", async (e) => {
