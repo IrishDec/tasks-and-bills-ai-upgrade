@@ -40,37 +40,35 @@ async function loadProfiles() {
   ).join("");
 }
 // load tasks
-async function loadTasks(profileId) {
-  if (!profileId) {
-    tasksList.innerHTML = `<li class="muted">Select a member.</li>`;
-    return;
-  }
+async function loadProfiles() {
   const { data, error } = await supabase
-    .from("tasks")
+    .from("profiles")
     .select("*")
-    .eq("profile_id", profileId)
     .order("created_at", { ascending: false });
 
+  // Render the Members list
   if (error) {
-    tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
-    return;
+    listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
+  } else if (!data.length) {
+    listEl.innerHTML = `<li class="muted">No members yet.</li>`;
+  } else {
+    listEl.innerHTML = data
+      .map(p => `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`)
+      .join("");
   }
-  if (!data.length) {
-    tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
-    return;
+
+  // Populate the “Assign to member” dropdown and load tasks
+  if (taskProfileSel) {
+    taskProfileSel.innerHTML = (data || [])
+      .map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
+      .join("");
+
+    if (data && data.length) {
+      await loadTasks(taskProfileSel.value);
+    } else {
+      tasksList.innerHTML = `<li class="muted">Add a member first.</li>`;
+    }
   }
-  tasksList.innerHTML = data.map(t => `
-    <li>
-      <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <span>${esc(t.text)}</span>
-        <button class="toggle" data-id="${t.id}">
-          ${t.done ? "Mark active" : "Mark done"}
-        </button>
-      </div>
-      <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
-    </li>
-  `).join("");
-}
 
 
 // add member
