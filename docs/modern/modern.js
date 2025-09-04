@@ -10,11 +10,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// DOM
 const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
+if (listEl) listEl.style.display = "none";
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
+
 
 // Tasks DOM
 const tasksList      = document.getElementById("tasksList");
@@ -72,34 +73,35 @@ formEl?.addEventListener("submit", async (e) => {
 });
 
 // TASKS — shared list for everyone
+// TASKS — shared list, badge + delete only when done
 async function loadTasks() {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
-    return;
-  }
-  if (!data || !data.length) {
-    tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
-    return;
-  }
+  if (error) { tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`; return; }
+  if (!data || !data.length) { tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`; return; }
 
   tasksList.innerHTML = data.map(t => {
     const owner = t.profile_id ? (profilesById[t.profile_id] || "Unknown") : "Unassigned";
     return `
       <li>
         <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-          <span>${esc(t.text)} <span class="muted">• ${esc(owner)}</span></span>
-          <button class="toggle" data-id="${t.id}">${t.done ? "Mark active" : "Mark done"}</button>
+          <span class="task-text" data-id="${t.id}" role="button" tabindex="0">
+            ${esc(t.text)} <span class="muted">• ${esc(owner)}</span>
+          </span>
+          <span class="badge">${t.done ? "Done" : "Active"}</span>
         </div>
         <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
+        <div class="row" style="margin-top:6px">
+          ${t.done ? `<button class="danger delete-task" data-id="${t.id}">Delete</button>` : ``}
+        </div>
       </li>
     `;
   }).join("");
 }
+
 
 // change selection (assignment only) -> just refresh list
 taskProfileSel?.addEventListener("change", () => {
@@ -122,30 +124,29 @@ addTaskForm?.addEventListener("submit", async (e) => {
   await loadTasks();
 });
 
-// toggle done/active, then reload shared list
+// Toggle by clicking text; show confirm when moving to Done. Delete only when Done.
 tasksList?.addEventListener("click", async (e) => {
-  const btn = e.target.closest("button.toggle");
-  if (!btn) return;
-  const id = btn.dataset.id;
+  const del = e.target.closest("button.delete-task");
+  if (del) {
+    const id = del.dataset.id;
+    if (!confirm("Delete this task?")) return;
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    if (error) { alert(error.message); return; }
+    await loadTasks();
+    return;
+  }
 
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("done")
-    .eq("id", id)
-    .single();
+  const txt = e.target.closest(".task-text");
+  if (!txt) return;
 
+  const id = txt.dataset.id;
+  const { data, error } = await supabase.from("tasks").select("done").eq("id", id).single();
   if (error) { alert(error.message); return; }
 
-  const updates = {
-    done: !data.done,
-    completed_at: !data.done ? new Date().toISOString() : null
-  };
+  if (!data.done && !confirm("Mark this task as done?")) return;
 
-  const { error: e2 } = await supabase
-    .from("tasks")
-    .update(updates)
-    .eq("id", id);
-
+  const updates = { done: !data.done, completed_at: !data.done ? new Date().toISOString() : null };
+  const { error: e2 } = await supabase.from("tasks").update(updates).eq("id", id);
   if (e2) { alert(e2.message); return; }
   await loadTasks();
 });
