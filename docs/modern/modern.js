@@ -9,12 +9,16 @@ const SUPABASE_URL = "https://bbjwivuczofcauirxxcv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiandpdnVjem9mY2F1aXJ4eGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTA2MTQsImV4cCI6MjA3MjU4NjYxNH0.wQwN5I-x6mOeO0fahidAdEPrYOnz4YQsYl1v_-w-eas";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+//Dom
 const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
-if (listEl) listEl.style.display = "none";
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
+if (statusEl) statusEl.textContent = "JS loaded – probing…";
+window.addEventListener("error", e => {
+  if (statusEl) statusEl.textContent = "JS error: " + (e?.message || e);
+});
+
 
 
 // Tasks DOM
