@@ -3,7 +3,7 @@ Legacy → modern: Shared Tasks & Bills app upgraded with AI (summaries, bill-sp
 
 ## Live demo
 - Replit: <## Live demo
-- GitHub Pages: https://<IrishDec>.github.io/tasks-and-bills-ai-upgrade/
+- GitHub Pages: https://IrishDec.github.io/tasks-and-bills-ai-upgrade/
 
 - Backup: GitHub Pages / Netlify (optional)
 
