@@ -10,6 +10,8 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
+let profilesById = {};
+
 
 // Tasks DOM
 const tasksList      = document.getElementById("tasksList");
@@ -29,7 +31,6 @@ async function loadProfiles() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  // render members
   if (error) {
     listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
   } else if (!data.length) {
@@ -39,6 +40,22 @@ async function loadProfiles() {
       .map(p => `<li><strong>${esc(p.name)}</strong> <span class="muted">• ${new Date(p.created_at).toLocaleString()}</span></li>`)
       .join("");
   }
+
+  // cache names for display
+  profilesById = Object.fromEntries((data || []).map(p => [p.id, p.name]));
+
+  // assign dropdown (optional)
+  if (taskProfileSel) {
+    taskProfileSel.innerHTML = [
+      `<option value="">— Unassigned —</option>`,
+      ...(data || []).map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
+    ].join("");
+  }
+
+  // always show the full shared list
+  await loadTasks();
+}
+
 
   // fill the assign dropdown + load that member’s tasks
   if (taskProfileSel) {
