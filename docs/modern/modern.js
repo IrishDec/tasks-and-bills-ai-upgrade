@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY"; // Settings → API
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -53,3 +53,4 @@ formEl.addEventListener("submit", async (e) => {
   statusEl.textContent = error ? "Connected ✔ (no table yet)" : "Connected ✔";
   await loadProfiles();
 })();
+
