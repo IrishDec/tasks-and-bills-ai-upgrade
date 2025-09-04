@@ -1,4 +1,8 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+statusEl.textContent = "JS loaded – probing…";
+window.addEventListener("error", e => {
+  statusEl.textContent = "JS error: " + (e?.message || e);
+});
 
 // ↓ Use your real values
 const SUPABASE_URL = "https://bbjwivuczofcauirxxcv.supabase.co";
