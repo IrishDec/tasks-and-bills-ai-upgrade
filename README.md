@@ -2,7 +2,8 @@
 Legacy → modern: Shared Tasks & Bills app upgraded with AI (summaries, bill-split suggestions, semantic search). Includes legacy & modern code.
 
 ## Live demo
-- Replit: <YOUR LIVE LINK>
+- Replit: <[YOUR LIVE LINK](https://<your-username>.github.io/tasks-and-bills-ai-upgrade/
+)>
 - Backup: GitHub Pages / Netlify (optional)
 
 ## Quick start
