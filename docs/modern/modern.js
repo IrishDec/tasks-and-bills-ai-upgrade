@@ -10,6 +10,11 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
+const tasksList = document.getElementById("tasksList");
+const addTaskForm = document.getElementById("addTaskForm");
+const taskProfileSel = document.getElementById("taskProfile");
+const taskTextEl = document.getElementById("taskText");
+
 
 const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
