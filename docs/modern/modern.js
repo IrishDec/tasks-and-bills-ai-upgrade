@@ -1,7 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ↓ Use your real values
 const SUPABASE_URL = "https://bbjwivuczofcauirxxcv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiandpdnVjem9mY2F1aXJ4eGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTA2MTQsImV4cCI6MjA3MjU4NjYxNH0.wQwN5I-x6mOeO0fahidAdEPrYOnz4YQsYl1v_-w-eas"; // Settings → API
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiandpdnVjem9mY2F1aXJ4eGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTA2MTQsImV4cCI6MjA3MjU4NjYxNH0.wQwN5I-x6mOeO0fahidAdEPrYOnz4YQsYl1v_-w-eas";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -10,8 +11,6 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
-let profilesById = {};
-
 
 // Tasks DOM
 const tasksList      = document.getElementById("tasksList");
@@ -24,6 +23,8 @@ const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[m]));
 
+let profilesById = {};
+
 // MEMBERS
 async function loadProfiles() {
   const { data, error } = await supabase
@@ -33,7 +34,7 @@ async function loadProfiles() {
 
   if (error) {
     listEl.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
-  } else if (!data.length) {
+  } else if (!data || !data.length) {
     listEl.innerHTML = `<li class="muted">No members yet.</li>`;
   } else {
     listEl.innerHTML = data
@@ -44,7 +45,7 @@ async function loadProfiles() {
   // cache names for display
   profilesById = Object.fromEntries((data || []).map(p => [p.id, p.name]));
 
-  // assign dropdown (optional)
+  // assignment dropdown (optional)
   if (taskProfileSel) {
     taskProfileSel.innerHTML = [
       `<option value="">— Unassigned —</option>`,
@@ -52,23 +53,8 @@ async function loadProfiles() {
     ].join("");
   }
 
-  // always show the full shared list
+  // always show the shared task list
   await loadTasks();
-}
-
-
-  // fill the assign dropdown + load that member’s tasks
-  if (taskProfileSel) {
-    taskProfileSel.innerHTML = (data || [])
-      .map(p => `<option value="${p.id}">${esc(p.name)}</option>`)
-      .join("");
-
-    if (data && data.length) {
-      await loadTasks(taskProfileSel.value);
-    } else {
-      tasksList.innerHTML = `<li class="muted">Add a member first.</li>`;
-    }
-  }
 }
 
 formEl?.addEventListener("submit", async (e) => {
@@ -81,7 +67,6 @@ formEl?.addEventListener("submit", async (e) => {
   await loadProfiles();
 });
 
-// TASKS
 // TASKS — shared list for everyone
 async function loadTasks() {
   const { data, error } = await supabase
@@ -93,37 +78,36 @@ async function loadTasks() {
     tasksList.innerHTML = `<li class="muted">Error: ${esc(error.message)}</li>`;
     return;
   }
-  if (!data.length) {
+  if (!data || !data.length) {
     tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
     return;
   }
 
-  // show who it's assigned to (or Unassigned)
-  tasksList.innerHTML = data.map(t => `
-    <li>
-      <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <span>${esc(t.text)} <span class="muted">• ${t.profile_id ? esc(profilesById[t.profile_id] || "Unknown") : "Unassigned"}</span></span>
-        <button class="toggle" data-id="${t.id}">
-          ${t.done ? "Mark active" : "Mark done"}
-        </button>
-      </div>
-      <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
-    </li>
-  `).join("");
+  tasksList.innerHTML = data.map(t => {
+    const owner = t.profile_id ? (profilesById[t.profile_id] || "Unknown") : "Unassigned";
+    return `
+      <li>
+        <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>${esc(t.text)} <span class="muted">• ${esc(owner)}</span></span>
+          <button class="toggle" data-id="${t.id}">${t.done ? "Mark active" : "Mark done"}</button>
+        </div>
+        <div class="muted">${new Date(t.created_at).toLocaleString()}</div>
+      </li>
+    `;
+  }).join("");
 }
 
-
-// change member → load tasks
+// change selection (assignment only) -> just refresh list
 taskProfileSel?.addEventListener("change", () => {
-  loadTasks(taskProfileSel.value);
+  loadTasks();
 });
 
-// add task
+// add task (assignment optional)
 addTaskForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = (taskTextEl.value || "").trim();
   if (!text) return;
-  const profileId = taskProfileSel.value;
+  const profileId = taskProfileSel.value || null; // allow unassigned
 
   const { error } = await supabase
     .from("tasks")
@@ -131,10 +115,10 @@ addTaskForm?.addEventListener("submit", async (e) => {
 
   if (error) { alert(error.message); return; }
   taskTextEl.value = "";
-  await loadTasks(profileId);
+  await loadTasks();
 });
 
-// toggle task
+// toggle done/active, then reload shared list
 tasksList?.addEventListener("click", async (e) => {
   const btn = e.target.closest("button.toggle");
   if (!btn) return;
@@ -142,7 +126,7 @@ tasksList?.addEventListener("click", async (e) => {
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("done, profile_id")
+    .select("done")
     .eq("id", id)
     .single();
 
@@ -159,7 +143,7 @@ tasksList?.addEventListener("click", async (e) => {
     .eq("id", id);
 
   if (e2) { alert(e2.message); return; }
-  await loadTasks(data.profile_id);
+  await loadTasks();
 });
 
 // INIT
@@ -169,6 +153,5 @@ tasksList?.addEventListener("click", async (e) => {
   statusEl.textContent = error ? "Supabase error: " + error.message : "Connected ✔";
   await loadProfiles();
 })();
-
 
 
