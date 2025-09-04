@@ -166,16 +166,27 @@ tasksList?.addEventListener("click", async (e) => {
 
 // Remove member: reassign their tasks to Unassigned, then delete the profile
 removeProfileBtn?.addEventListener("click", async () => {
-  const id = removeProfileSel?.value;
-  if (!id) return;
+  if (!removeProfileSel || !removeProfileSel.value) {
+    alert("Pick a member to remove.");
+    return;
+  }
+  const id = removeProfileSel.value;
   const name = profilesById[id] || "this member";
   if (!confirm(`Remove ${name}? Their tasks will become Unassigned.`)) return;
 
-  const { error: e1 } = await supabase.from("tasks").update({ profile_id: null }).eq("profile_id", id);
-  if (e1) { alert(e1.message); return; }
+  // 1) Reassign their tasks
+  const { error: e1 } = await supabase
+    .from("tasks")
+    .update({ profile_id: null })
+    .eq("profile_id", id);
+  if (e1) { alert("Could not reassign tasks: " + e1.message); return; }
 
-  const { error: e2 } = await supabase.from("profiles").delete().eq("id", id);
-  if (e2) { alert(e2.message); return; }
+  // 2) Delete the member
+  const { error: e2 } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", id);
+  if (e2) { alert("Could not remove member: " + e2.message); return; }
 
   await loadProfiles();
   await loadTasks();
