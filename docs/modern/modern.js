@@ -65,15 +65,11 @@ formEl?.addEventListener("submit", async (e) => {
 });
 
 // TASKS
-async function loadTasks(profileId) {
-  if (!profileId) {
-    tasksList.innerHTML = `<li class="muted">Select a member.</li>`;
-    return;
-  }
+// TASKS — shared list for everyone
+async function loadTasks() {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
-    .eq("profile_id", profileId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -84,10 +80,12 @@ async function loadTasks(profileId) {
     tasksList.innerHTML = `<li class="muted">No tasks yet.</li>`;
     return;
   }
+
+  // show who it's assigned to (or Unassigned)
   tasksList.innerHTML = data.map(t => `
     <li>
       <div class="task-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <span>${esc(t.text)}</span>
+        <span>${esc(t.text)} <span class="muted">• ${t.profile_id ? esc(profilesById[t.profile_id] || "Unknown") : "Unassigned"}</span></span>
         <button class="toggle" data-id="${t.id}">
           ${t.done ? "Mark active" : "Mark done"}
         </button>
@@ -96,6 +94,7 @@ async function loadTasks(profileId) {
     </li>
   `).join("");
 }
+
 
 // change member → load tasks
 taskProfileSel?.addEventListener("change", () => {
