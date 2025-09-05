@@ -56,7 +56,9 @@
     <input id="billStart" type="date" title="Start date" />
     <button type="submit">Add bill</button>
   </form>
-  <div id="billMembersBox" class="row" style="gap:12px;margin-top:6px"></div>
+ <label class="subtle" for="billMembers">Share with</label>
+<select id="billMembers" multiple size="4" title="Hold Ctrl/Cmd to multi-select" style="min-width:220px;"></select>
+
   <ul id="billList"></ul>
 </div>
 
