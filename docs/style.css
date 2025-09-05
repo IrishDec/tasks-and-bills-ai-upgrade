@@ -1,28 +1,20 @@
-:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--brand:#4f46e5;--rad:14px}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial}
-.wrap{max-width:900px;margin:32px auto;padding:0 16px}
-.panel{background:var(--card);border-radius:var(--rad);padding:16px;margin:12px 0;border:1px solid var(--line)}
-h1{margin:0 0 8px;font-size:1.6rem}
-h2{margin:.2rem 0 .6rem;font-size:1.2rem}
-.muted{color:var(--muted)}
-input{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-right:8px}
-button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer}
-button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
-ul{list-style:none;padding:0;margin:10px 0 0}
-ul li{padding:8px 4px;border-top:1px solid var(--line)}
-/* ----- Quick polish (mobile-first) ----- */
+/* ===== Base tokens ===== */
 :root{
   --bg:#f6f7fb; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
   --brand:#4f46e5; --warn:#ef4444; --rad:14px; --shadow:0 8px 24px rgba(0,0,0,.08);
 }
 
-body{ background:var(--bg); color:var(--ink); font-family:system-ui, Segoe UI, Arial; }
+/* ===== Base layout ===== */
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:system-ui, Segoe UI, Arial; }
 .wrap{ max-width:980px; margin:32px auto; padding:0 16px; }
 
 .card{
-  background:var(--card); border-radius:var(--rad); box-shadow:var(--shadow);
-  padding:18px; margin-bottom:16px;
+  background:var(--card);
+  border-radius:var(--rad);
+  box-shadow:var(--shadow);
+  padding:18px;
+  margin-bottom:16px;
 }
 
 h1{ margin:0 0 8px; font-size:1.6rem; }
@@ -31,88 +23,90 @@ h2{ margin:.2rem 0 .6rem; font-size:1.2rem; }
 
 .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 
+/* ===== Form controls (unified look) ===== */
 input,select,button{
-  border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:1rem;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:1rem;
 }
-input,select{ min-width: 160px; }
+input,select{ min-width:160px; }
+
 button{ background:var(--brand); color:#fff; border:none; cursor:pointer; }
-button.ghost{ background:#fff; color:var(--ink); }
-button.danger{ background:var(--warn); }
+button.ghost{ background:#fff; color:var(--ink); border:1px solid var(--line); }
+button.danger{ background:var(--warn); color:#fff; }
 button:disabled{ opacity:.6; cursor:not-allowed; }
 
+/* Single-selects (Tasks style, with chevron) */
+select:not([multiple]){
+  appearance:none; -webkit-appearance:none;
+  height:44px;
+  padding:10px 40px 10px 14px;
+  background:#fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+}
+
+/* Multi-select (bill members) */
+select[multiple]{
+  appearance:none; -webkit-appearance:none;
+  min-height:120px;
+  padding:10px 14px;
+  background:#fff;
+}
+
+/* Lists */
 ul{ list-style:none; margin:12px 0 0; padding:0; }
 li{ border-top:1px solid var(--line); padding:12px 4px; }
 
+/* Layout bits */
 .task-head,.bill-head{
   display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
 }
 
+/* Badges & states */
 .badge{
-  font-size:.82rem; padding:.25rem .6rem; border-radius:999px;
+  font-size:.85rem; padding:.25rem .6rem; border-radius:999px;
   background:#eef; color:#223; border:1px solid var(--line);
 }
-.badge:has(+ .badge-done), .badge-done{ background:#e7f7ec; color:#1b4; }
+.badge-done{ background:#e7f7ec; color:#147d3f; }
 
 .due-soon{ background:#fff7e6; }
-.overdue{ background:#ffe6e6; }
+.overdue{  background:#ffe6e6; }
 
-@media (max-width: 500px){
+/* Mobile */
+@media (max-width:500px){
   input,select,button{ width:100%; }
   .row{ gap:10px; }
 }
-/* ===== Modern-only polish ===== */
-.modern {
-  --radius: 16px;
-}
 
-.modern .card{
-  border-radius: var(--radius);
-  box-shadow: 0 12px 30px rgba(0,0,0,.08);
-  padding: 20px 22px;
-}
-
+/* ===== Modern-only polish (scope with <body class="modern">) ===== */
+.modern{ --radius:16px; }
+.modern .card{ border-radius:var(--radius); box-shadow:0 12px 30px rgba(0,0,0,.08); padding:20px 22px; }
 .modern h1{ font-size:1.7rem; margin:0 0 .5rem; }
 .modern h2{ font-size:1.1rem; margin:0 0 .6rem; }
-
 .modern .row{ gap:10px; align-items:center; flex-wrap:wrap; }
+.modern input,.modern select,.modern button{ height:42px; padding:10px 12px; }
+.modern .badge{ background:#eef; color:#334; border-radius:999px; font-size:.85rem; padding:4px 10px; }
 
-.modern input,
-.modern select,
-.modern button{
-  height:42px;
-  padding:10px 12px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  font-size:1rem;
-}
-
-.modern button{
+/* Modern nav pills */
+.mod-nav{ display:flex; gap:12px; margin-bottom:16px; }
+.mod-nav button{
   background:var(--brand);
   color:#fff;
-  border:0;
-  cursor:pointer;
-}
-.modern button.ghost{ background:#fff; color:var(--ink); border:1px solid var(--line); }
-.modern button.danger{ background:var(--warn); color:#fff; }
-
-.modern .badge{
-  background:#eef;
-  color:#334;
-  border-radius:999px;
-  font-size:.85rem;
-  padding:4px 10px;
+  border:none;
+  border-radius:12px;
+  padding:10px 16px;
 }
 
-.modern .task-head{ align-items:center; }
-
-/* Bills: make multi-select feel like the Tasks dropdown */
+/* Make the bill members multi-select visually align with other controls */
 .modern #billMembersSel[multiple]{
+  height:42px;      /* same row height */
   min-width:260px;
-  height:42px;               /* same height as other controls */
-  line-height:20px;
   padding:10px 12px;
   border-radius:10px;
+  line-height:20px;
   overflow:hidden;
-  appearance:none;           /* remove default arrow */
 }
 .modern #billMembersSel option{ padding:2px 6px; }
+
