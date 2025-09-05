@@ -33,19 +33,31 @@
     </div>
   
 
-    <!-- Tasks card -->
+       </div>  <!-- end Tasks card -->
+
+    <!-- Bills card -->
     <div class="card">
-      <h2>Tasks</h2>
-      <form id="addTaskForm" class="row" style="gap:8px;align-items:center">
-        <select id="taskProfile" title="Assign to member"></select>
-        <input id="taskText" placeholder="New task" />
-        <button type="submit">Add task</button>
+      <h2>Bills</h2>
+
+      <form id="addBillForm" class="row" style="gap:8px;align-items:center">
+        <input id="billName" placeholder="Bill name" />
+        <input id="billAmount" type="number" min="0" step="0.01" placeholder="Amount" />
+        <select id="billFreq" title="Frequency">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+        </select>
+        <input id="billStart" type="date" title="Start date" />
+        <div id="billMembersBox" class="row" style="gap:12px"></div>
+        <button type="submit">Add bill</button>
       </form>
-      <ul id="tasksList"></ul>
+
+      <ul id="billList"></ul>
     </div>
-  </div>
+
+  </div>  <!-- end .wrap -->
 
   <script type="module" src="./modern.js"></script>
 </body>
 </html>
+
 
