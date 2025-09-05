@@ -15,6 +15,15 @@ const nameEl   = document.getElementById("profileName");
 // correct (matches the HTML: id="billMembersSel")
 const billMembersSel = document.getElementById("billMembersSel");
 
+// Toggle selection on click (no Ctrl/Cmd needed)
+billMembersSel?.addEventListener("mousedown", (e) => {
+  const opt = e.target.closest("option");
+  if (!opt) return;
+  e.preventDefault();          // keep prior selections
+  opt.selected = !opt.selected; // toggle this one
+});
+
+
 
 
 // Bills DOM
@@ -38,6 +47,22 @@ const taskTextEl     = document.getElementById("taskText");
 // NEW: remove-member controls
 const removeProfileSel = document.getElementById("removeProfileSel");
 const removeProfileBtn = document.getElementById("removeProfileBtn");
+
+// --- NAV: show one card at a time ---
+const navBtns = document.querySelectorAll('.mod-nav [data-card]');
+const cardIds = ['card-status','card-members','card-tasks','card-bills','card-hero'];
+
+function showCard(id) {
+  cardIds.forEach(cid => {
+    const el = document.getElementById(cid);
+    if (!el) return;
+    el.style.display = (cid === id) ? '' : 'none';
+  });
+}
+navBtns.forEach(btn => btn.addEventListener('click', () => showCard(btn.dataset.card)));
+// default view
+showCard('card-tasks');
+
 
 // Hide the rendered member list UI (we still use it behind the scenes)
 if (listEl) listEl.style.display = "none";
