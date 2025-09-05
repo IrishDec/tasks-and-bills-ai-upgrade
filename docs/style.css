@@ -60,3 +60,59 @@ li{ border-top:1px solid var(--line); padding:12px 4px; }
   input,select,button{ width:100%; }
   .row{ gap:10px; }
 }
+/* ===== Modern-only polish ===== */
+.modern {
+  --radius: 16px;
+}
+
+.modern .card{
+  border-radius: var(--radius);
+  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+  padding: 20px 22px;
+}
+
+.modern h1{ font-size:1.7rem; margin:0 0 .5rem; }
+.modern h2{ font-size:1.1rem; margin:0 0 .6rem; }
+
+.modern .row{ gap:10px; align-items:center; flex-wrap:wrap; }
+
+.modern input,
+.modern select,
+.modern button{
+  height:42px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  font-size:1rem;
+}
+
+.modern button{
+  background:var(--brand);
+  color:#fff;
+  border:0;
+  cursor:pointer;
+}
+.modern button.ghost{ background:#fff; color:var(--ink); border:1px solid var(--line); }
+.modern button.danger{ background:var(--warn); color:#fff; }
+
+.modern .badge{
+  background:#eef;
+  color:#334;
+  border-radius:999px;
+  font-size:.85rem;
+  padding:4px 10px;
+}
+
+.modern .task-head{ align-items:center; }
+
+/* Bills: make multi-select feel like the Tasks dropdown */
+.modern #billMembersSel[multiple]{
+  min-width:260px;
+  height:42px;               /* same height as other controls */
+  line-height:20px;
+  padding:10px 12px;
+  border-radius:10px;
+  overflow:hidden;
+  appearance:none;           /* remove default arrow */
+}
+.modern #billMembersSel option{ padding:2px 6px; }
