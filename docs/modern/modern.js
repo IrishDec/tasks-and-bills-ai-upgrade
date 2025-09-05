@@ -12,6 +12,8 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
+const billMembersSel = document.getElementById("billMembers");
+
 
 // Bills DOM
 const addBillForm  = document.getElementById("addBillForm");
@@ -49,15 +51,13 @@ const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[m]));
 
-function renderBillMembersBox(members) {
-  const box = document.getElementById("billMembersBox");
-  if (!box) return;
-  box.innerHTML = (members || []).map(u => `
-    <label class="subtle" style="display:flex;align-items:center;gap:.5rem">
-      <input type="checkbox" class="bm" value="${u.id}" checked>
-      ${esc(u.name)}
-    </label>
-  `).join("");
+function renderBillMembersSelect(members) {
+  if (!billMembersSel) return;
+  billMembersSel.innerHTML = (members || [])
+    .map(u => `<option value="${u.id}">${esc(u.name)}</option>`)
+    .join("");
+  // default-select everyone
+  [...billMembersSel.options].forEach(o => (o.selected = true));
 }
 
 
@@ -101,7 +101,8 @@ async function loadProfiles() {
     ).join("");
   }
 
-  renderBillMembersBox(data); 
+  renderBillMembersSelect(data);
+ 
 
   await loadTasks();
 }
@@ -238,8 +239,10 @@ addBillForm?.addEventListener("submit", async (e) => {
   const freq   = billFreqEl.value || "monthly";
   const start  = billStartEl.value ? new Date(billStartEl.value).toISOString() : new Date().toISOString();
 
-  const selected = [...document.querySelectorAll("#billMembersBox input.bm:checked")].map(cb => cb.value);
-  const members = selected.length ? selected : Object.keys(profilesById);
+  // selected members (fallback to everyone)
+const selected = [...(billMembersSel?.selectedOptions || [])].map(o => o.value);
+const members  = selected.length ? selected : Object.keys(profilesById);
+
 
   const { data: created, error: e1 } = await supabase
     .from("bills")
@@ -256,7 +259,8 @@ addBillForm?.addEventListener("submit", async (e) => {
   billAmountEl.value = "";
   billFreqEl.value = "monthly";
   billStartEl.value = "";
-  renderBillMembersBox(Object.entries(profilesById).map(([id, name]) => ({ id, name })));
+ renderBillMembersSelect(Object.entries(profilesById).map(([id, name]) => ({ id, name })));
+
 
   await loadBills();
 });
