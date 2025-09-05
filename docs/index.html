@@ -21,49 +21,7 @@
       <ul id="tasks"></ul>
       <button class="ghost" onclick="clearDone()">Clear completed</button>
     </div>
-<div class="card">
-  <h2>Bills</h2>
-  <form id="addBillForm" class="row" style="gap:8px;align-items:center">
-    <input id="billName" placeholder="Bill name" />
-    <input id="billAmount" type="number" min="0" step="0.01" placeholder="Amount" />
-    <select id="billFreq">
-      <option value="monthly">Monthly</option>
-      <option value="weekly">Weekly</option>
-    </select>
-    <input id="billStart" type="date" title="Start date" />
-    <button type="submit">Add bill</button>
-  </form>
-  <ul id="billList"></ul>
-</div>
-<div class="card">
-  <h2>Bills</h2>
 
-  <!-- add bill -->
-  <form id="addBillForm" class="row" style="gap:8px;align-items:center">
-    <input id="billName" placeholder="Bill name" />
-    <input id="billAmount" type="number" min="0" step="0.01" placeholder="Amount" />
-    <select id="billFreq" title="Frequency">
-      <option value="monthly">Monthly</option>
-      <option value="weekly">Weekly</option>
-    </select>
-    <input id="billStart" type="date" title="Start date" />
-    <!-- members (JS will populate with checkboxes) -->
-    <div id="billMembersBox" class="row" style="gap:12px"></div>
-    <button type="submit">Add bill</button>
-  </form>
-
-  <!-- list -->
-  <ul id="billList"></ul>
-</div>
-
- <div class="panel">
-      <h2>Bills</h2>
-      <input id="billName" placeholder="Bill name">
-      <input id="billAmount" type="number" min="0" step="0.01" placeholder="Amount">
-      <button onclick="addBill()">Add bill</button>
-      <ul id="bills"></ul>
-    </div>
-  </div>
 
   <!-- legacy style: no defer, globals used by inline onclick -->
   <script src="script.js"></script>
