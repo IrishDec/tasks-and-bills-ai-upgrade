@@ -36,6 +36,18 @@ const esc = s => String(s).replace(/[&<>"']/g, m => ({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[m]));
 
+function renderBillMembersBox(members) {
+  const box = document.getElementById("billMembersBox");
+  if (!box) return;
+  box.innerHTML = (members || []).map(u => `
+    <label class="subtle" style="display:flex;align-items:center;gap:.5rem">
+      <input type="checkbox" class="bm" value="${u.id}" checked>
+      ${esc(u.name)}
+    </label>
+  `).join("");
+}
+
+
 let profilesById = {};
 
 // ---- MEMBERS ----
@@ -75,6 +87,8 @@ async function loadProfiles() {
       `<option value="${p.id}">${esc(p.name)}</option>`
     ).join("");
   }
+
+  renderBillMembersBox(data); 
 
   await loadTasks();
 }
