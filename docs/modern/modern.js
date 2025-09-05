@@ -12,7 +12,9 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
-const billMembersSel = document.getElementById("billMembers");
+// correct (matches the HTML: id="billMembersSel")
+const billMembersSel = document.getElementById("billMembersSel");
+
 
 
 // Bills DOM
@@ -293,6 +295,14 @@ removeProfileBtn?.addEventListener("click", async () => {
   await loadProfiles();
   await loadTasks();
 });
+
+billMembersSel?.addEventListener("mousedown", (e) => {
+  const opt = e.target.closest("option");
+  if (!opt) return;
+  e.preventDefault();           // don’t clear other selections
+  opt.selected = !opt.selected; // toggle this one
+});
+
 
 // ---- INIT ----
 (async () => {
