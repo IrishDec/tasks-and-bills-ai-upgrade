@@ -13,6 +13,19 @@ const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
 
+// Bills DOM
+const addBillForm  = document.getElementById("addBillForm");
+const billNameEl   = document.getElementById("billName");
+const billAmountEl = document.getElementById("billAmount");
+const billFreqEl   = document.getElementById("billFreq");
+const billStartEl  = document.getElementById("billStart");
+const billList     = document.getElementById("billList");
+
+// money formatter
+const CURRENCY = "EUR";
+const money = new Intl.NumberFormat(undefined, { style: "currency", currency: CURRENCY });
+
+
 const tasksList      = document.getElementById("tasksList");
 const addTaskForm    = document.getElementById("addTaskForm");
 const taskProfileSel = document.getElementById("taskProfile");
@@ -163,6 +176,8 @@ tasksList?.addEventListener("click", async (e) => {
     return;
   }
 
+  
+
   const txt = e.target.closest(".task-text");
   if (!txt) return;
 
@@ -177,6 +192,75 @@ tasksList?.addEventListener("click", async (e) => {
   if (e2) { alert(e2.message); return; }
   await loadTasks();
 });
+
+// ------- BILLS -------
+async function loadBills() {
+  if (!billList) return;
+
+  const { data: bills, error: e1 } = await supabase
+    .from("bills")
+    .select("*")
+    .order("start_date", { ascending: true });
+  if (e1) { billList.innerHTML = `<li class="muted">Error: ${esc(e1.message)}</li>`; return; }
+  if (!bills?.length) { billList.innerHTML = `<li class="muted">No bills yet.</li>`; return; }
+
+  const { data: links, error: e2 } = await supabase
+    .from("bill_members")
+    .select("bill_id, profile_id");
+  if (e2) { billList.innerHTML = `<li class="muted">Error: ${esc(e2.message)}</li>`; return; }
+
+  const byBill = {};
+  (links || []).forEach(l => { (byBill[l.bill_id] ||= []).push(l.profile_id); });
+
+  billList.innerHTML = bills.map(b => {
+    const members = byBill[b.id]?.length ? byBill[b.id] : Object.keys(profilesById);
+    const names = members.map(id => esc(profilesById[id] || "Unknown")).join(", ");
+    const amount = Number(b.amount) || 0;
+    const perPerson = members.length ? amount / members.length : amount;
+    const start = b.start_date ? new Date(b.start_date).toLocaleDateString() : "—";
+    return `
+      <li>
+        <div class="bill-head">
+          <div><strong>${esc(b.name)}</strong> • ${money.format(amount)} • ${esc(b.freq)} • Start: ${start}</div>
+        </div>
+        <div class="meta">Shared by: ${names} (${members.length}) • Per person: ${money.format(perPerson)}</div>
+      </li>
+    `;
+  }).join("");
+}
+
+addBillForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = (billNameEl.value || "").trim();
+  if (!name) return;
+
+  const amount = parseFloat(billAmountEl.value || "0");
+  const freq   = billFreqEl.value || "monthly";
+  const start  = billStartEl.value ? new Date(billStartEl.value).toISOString() : new Date().toISOString();
+
+  const selected = [...document.querySelectorAll("#billMembersBox input.bm:checked")].map(cb => cb.value);
+  const members = selected.length ? selected : Object.keys(profilesById);
+
+  const { data: created, error: e1 } = await supabase
+    .from("bills")
+    .insert({ name, amount: isNaN(amount) ? 0 : amount, freq, start_date: start })
+    .select("id")
+    .single();
+  if (e1) { alert(e1.message); return; }
+
+  const rows = members.map(pid => ({ bill_id: created.id, profile_id: pid }));
+  const { error: e2 } = await supabase.from("bill_members").insert(rows);
+  if (e2) { alert(e2.message); return; }
+
+  billNameEl.value = "";
+  billAmountEl.value = "";
+  billFreqEl.value = "monthly";
+  billStartEl.value = "";
+  renderBillMembersBox(Object.entries(profilesById).map(([id, name]) => ({ id, name })));
+
+  await loadBills();
+});
+
 
 // Remove member: reassign their tasks to Unassigned, then delete the profile
 removeProfileBtn?.addEventListener("click", async () => {
@@ -212,6 +296,8 @@ removeProfileBtn?.addEventListener("click", async () => {
   const { error } = await supabase.from("profiles").select("id").limit(1);
   if (statusEl) statusEl.textContent = error ? "Supabase error: " + error.message : "Connected ✔";
   await loadProfiles();
+  await loadBills();
+
 })();
 
 
