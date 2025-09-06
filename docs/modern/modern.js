@@ -15,13 +15,25 @@ const nameEl   = document.getElementById("profileName");
 // correct (matches the HTML: id="billMembersSel")
 const billMembersSel = document.getElementById("billMembersSel");
 
-// Toggle selection on click (no Ctrl/Cmd needed)
+const billMembersSel = document.getElementById("billMembersSel");
+
+// click-to-toggle (no Ctrl/Cmd needed)
 billMembersSel?.addEventListener("mousedown", (e) => {
   const opt = e.target.closest("option");
   if (!opt) return;
-  e.preventDefault();          // keep prior selections
-  opt.selected = !opt.selected; // toggle this one
+  e.preventDefault();
+  opt.selected = !opt.selected;
 });
+
+// renderer
+function renderBillMembersSelect(members) {
+  if (!billMembersSel) return;
+  billMembersSel.innerHTML = (members || [])
+    .map(u => `<option value="${u.id}">${esc(u.name)}</option>`)
+    .join("");
+  [...billMembersSel.options].forEach(o => (o.selected = true));
+}
+
 
 
 
@@ -128,7 +140,7 @@ async function loadProfiles() {
     ).join("");
   }
 
-  renderBillMembersSelect(data);
+  renderBillMembersSelect(data || []);
  
 
   await loadTasks();
