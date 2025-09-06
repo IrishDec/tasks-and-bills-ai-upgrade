@@ -110,3 +110,26 @@ li{ border-top:1px solid var(--line); padding:12px 4px; }
 }
 .modern #billMembersSel option{ padding:2px 6px; }
 
+/* Unify form control look */
+body.modern input,
+body.modern select,
+body.modern button{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:1rem;
+  height:42px;
+}
+
+/* Multi-select that looks like a normal dropdown */
+body.modern #billMembersSel[multiple]{
+  height:42px;
+  min-width:260px;
+  padding:10px 12px;
+  border-radius:10px;
+  appearance:none;
+  overflow:hidden;
+}
+body.modern #billMembersSel option{ padding:2px 6px; }
+
+
