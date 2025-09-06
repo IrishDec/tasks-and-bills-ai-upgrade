@@ -12,10 +12,11 @@ const statusEl = document.getElementById("status");
 const listEl   = document.getElementById("profilesList");
 const formEl   = document.getElementById("addProfileForm");
 const nameEl   = document.getElementById("profileName");
-// correct (matches the HTML: id="billMembersSel")
-const billMembersSel = document.getElementById("billMembersSel");
+
 
 const billMembersSel = document.getElementById("billMembersSel");
+
+
 
 // click-to-toggle (no Ctrl/Cmd needed)
 billMembersSel?.addEventListener("mousedown", (e) => {
@@ -281,6 +282,7 @@ addBillForm?.addEventListener("submit", async (e) => {
   // selected members (fallback to everyone)
 const selected = [...(billMembersSel?.selectedOptions || [])].map(o => o.value);
 const members  = selected.length ? selected : Object.keys(profilesById);
+
 
 
   const { data: created, error: e1 } = await supabase
